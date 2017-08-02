@@ -1,0 +1,1 @@
+las condiciones están en el servidor.js dentro de  client.on('cambioSensores', function (data)

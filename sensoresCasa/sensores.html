@@ -1,0 +1,64 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Sensores</title>
+    </head>
+    <body>
+        <h1>Sensores</h1>
+        
+        <form action="javascript:void(0);" onsubmit="javascript:enviar();">
+			<label>Temperatura:</label><input id="temperatura" /> <label>Umbral: 30-15</label><br/>
+			<label>Luminosidad:</label><input id="luminosidad" /> <label>Umbral: 20-5</label><br/>
+			<br/>
+			<input type="submit" value="Modificar" />
+		</form>
+        
+		<div id="resultados">
+            <label>Estado Aire Acondicionado: </label>  <label id="estadoAire"></label><br/>
+            <label>Estado Persianas: </label>           <label id="estadoPersianas"></label>
+        </div>  
+        
+    </body>
+    
+    <script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+        
+        var serviceURL = "localhost:8080";
+		var socket = io.connect(serviceURL);
+        
+        function enviar() {
+	    var d = new Date(); 
+	    var val1 = document.getElementById("temperatura").value;
+	    var val2 = document.getElementById("luminosidad").value;
+	    var val3 = document.getElementById("estadoAire").innerHTML;
+	    var val4 = document.getElementById("estadoPersianas").innerHTML;
+		
+            
+            //envía datos de temperatura y luminosidad al servidor
+			socket.emit('cambioSensores', {fecha: d, temp: val1, lum: val2, aire: val3, persiana: val4});    		
+		}
+        
+        //Esperando cambios en la posición del aire acondicionado
+        socket.on('actualizarAireCasa', function (data) { 
+            var posAireRecibida = data; 
+            document.getElementById('estadoAire').innerHTML = posAireRecibida;
+
+        });
+        
+        //Esperando cambios en la posición de las persianas
+        socket.on('actualizarPersianasCasa', function (data) { 
+            var posPersianasRecibida = data; 
+            document.getElementById('estadoPersianas').innerHTML = posPersianasRecibida;
+
+        });
+
+	//Esperando alertas para bajar persiana
+        socket.on('alertas', function (data) { 
+            var val1 = data.persiana;
+            
+            document.getElementById('estadoPersianas').innerHTML = val1;
+
+        });
+        
+    </script>
+</html>

@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Cliente Web</title>
+    </head>
+    <body>
+        <h1>Cliente Web</h1>
+        <label>Temperatura actual:</label> <label id="temperaturaActual"></label><br/>
+        <label>Luminosidad actual:</label> <label id="LuminosidadActual"></label><br/><br/>
+        
+        <form action="javascript:void(0);" onsubmit="javascript:cambiarAire();">
+			<label>Estado Aire Acondicionado: </label><input id="estadoAire" value ="OFF"/>
+			<label>Valores correctos: ON / OFF </label><br/>
+			<input type="submit" value="Cambiar Aire" />
+		</form>
+        
+        <form action="javascript:void(0);" onsubmit="javascript:cambiarPersianas();">
+			<label>Estado Persianas: </label><input id="estadoPersianas" value ="Bajadas"/>
+			<label>Valores correctos: Bajadas / Subidas </label><br/>
+			<input type="submit" value="Cambiar Persianas" />
+		</form>
+        
+        <label id="alertaTemperatura"></label><br/>
+        
+        <label id="alertaLuminosidad"></label><br/>
+        
+    </body>
+    <script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+        
+        var serviceURL = "localhost:8080";
+		var socket = io.connect(serviceURL);
+        
+        function cambiarAire(){
+            var d = new Date();
+            var valor = document.getElementById('estadoAire').value;
+            //Envia al servidor la nueva posicion del aire (ON/OFF)
+            socket.emit('cambioAire', {fecha: d, posAire: valor}); 
+        }
+        
+        function cambiarPersianas(){
+            var d = new Date();
+            var valor = document.getElementById('estadoPersianas').value;
+            //Envia al servidor la nueva posicion de las persianas (Subidas o bajadas)
+            socket.emit('cambioPersianas', {fecha: d, posPersianas: valor}); 
+        }
+        
+        //Esperando cambios en las medidas de los sensores para actualizar los datos mostrados
+        socket.on('actualizarDatosCliente', function (data) { 
+            var tempRecibida = data.temp;
+            var lumRecibida = data.lum;
+            
+            document.getElementById('temperaturaActual').innerHTML = tempRecibida;
+            document.getElementById('LuminosidadActual').innerHTML = lumRecibida;
+            
+            //------------
+            var alerta1 = data.alertaT;
+            var alerta2 = data.alertaL;
+            
+            if(alerta1=="")
+                document.getElementById('alertaTemperatura').innerHTML = alerta1;
+            if(alerta2=="")
+                document.getElementById('alertaLuminosidad').innerHTML = alerta2;
+            
+            //-------------
+        });
+        
+        //Esperando alertas para bajar persiana
+        socket.on('alertas', function (data) { 
+            var val1 = data.alerta1;
+            var val2 = data.alerta2;
+            var val3 = data.persiana;
+	    var val4 = data.aire;
+            
+            document.getElementById('alertaTemperatura').innerHTML = val1;
+            document.getElementById('alertaLuminosidad').innerHTML = val2;
+            document.getElementById('estadoPersianas').value = val3;
+	    document.getElementById('estadoAire').value = val4;
+        });
+        
+        //Esperando alerta temperatura
+        socket.on('alertaT', function (data) { 
+            var val1 = data;
+             
+            document.getElementById('alertaTemperatura').innerHTML = val1;
+        });
+        
+        //Esperando alerta luminosidad
+        socket.on('alertaL', function (data) { 
+            var val1 = data;
+
+            document.getElementById('alertaLuminosidad').innerHTML = val1;
+        });
+        
+    </script>
+</html>
